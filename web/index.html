@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collect QR — configure ODK Collect / KoboCollect with one QR code</title>
+<meta name="description" content="Generate the configuration QR code for ODK Collect and KoboCollect: server, account, project, automatic sending and updates, interviewer locks. Everything runs in your browser; nothing is sent anywhere.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236b63e6'/%3E%3Cpath d='M8 8h6v6H8zM18 8h6v6h-6zM8 18h6v6H8zM18 18h2v2h-2zM22 18h2v2h-2zM18 22h2v2h-2zM22 22h2v2h-2z' fill='%23fff'/%3E%3C/svg%3E">
+</head>
+<body class="min-h-screen">
+
+<header class="border-b border-line bg-card/90 backdrop-blur sticky top-0 z-20">
+  <div class="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white font-extrabold" aria-hidden="true">Q</span>
+    <div class="min-w-0">
+      <div class="font-bold leading-tight truncate" data-i18n="title">Collect QR</div>
+      <div class="text-xs text-muted leading-tight" data-i18n="subtitle">Configuration QR codes for ODK Collect and KoboCollect</div>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <span class="chip chip-ok hidden sm:inline-flex" data-i18n="privacy">🔒 runs in your browser — nothing is uploaded</span>
+      <button type="button" class="btn btn-sm" id="lang" aria-label="Language">PT</button>
+      <a class="btn btn-sm hidden sm:inline-flex" href="https://github.com/Prompt-Consultoria/collect-settings-app" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-4 py-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]">
+
+<form id="form" class="grid grid-cols-1 gap-5 min-w-0" autocomplete="off" novalidate>
+
+  <section class="card" aria-labelledby="t-server">
+    <div class="flex items-center gap-3 mb-1">
+      <span class="passo">1</span>
+      <h2 id="t-server" class="titulo" data-i18n="s1">Server</h2>
+    </div>
+    <p class="ajuda mb-4" data-i18n="s1help">The app downloads every form the account can see on this server. For KoboToolbox use the KoboCAT host (kc.…), never the kf./eu. web interface.</p>
+    <div id="servers" class="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup"></div>
+    <div id="custom-box" class="mt-3 hidden">
+      <label class="label" for="server-url" data-i18n="serverUrl">Server URL</label>
+      <input class="input" id="server-url" type="url" placeholder="https://kc.example.org" inputmode="url">
+      <p class="ajuda mt-1" data-i18n="serverUrlHelp">Your own KoboToolbox (kc. host) or any OpenRosa-compatible server. For KoboToolbox forms that accept anonymous submissions, use https://kc.kobotoolbox.org/&lt;owner username&gt; and leave the account empty.</p>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="t-account">
+    <div class="flex items-center gap-3 mb-1">
+      <span class="passo">2</span>
+      <h2 id="t-account" class="titulo" data-i18n="s2">Interviewer account</h2>
+    </div>
+    <p class="ajuda mb-4" data-i18n="s2help">The account travels inside the QR code: whoever scans it is logged in without typing anything. Use an account that only has "add submissions" on the forms of this team.</p>
+    <div class="flex gap-2 mb-4" role="tablist">
+      <button type="button" class="btn btn-sm" id="mode-one" role="tab" aria-selected="true" data-i18n="oneAccount">One account</button>
+      <button type="button" class="btn btn-sm" id="mode-many" role="tab" aria-selected="false" data-i18n="manyAccounts">Several accounts (one QR each)</button>
+    </div>
+    <div id="box-one" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div>
+        <label class="label" for="username" data-i18n="username">Username</label>
+        <input class="input" id="username" autocapitalize="off" spellcheck="false">
+      </div>
+      <div>
+        <label class="label" for="password" data-i18n="password">Password</label>
+        <div class="flex gap-2">
+          <input class="input" id="password" type="password">
+          <button type="button" class="btn btn-icone" data-eye="password" aria-label="Show password">👁</button>
+        </div>
+      </div>
+    </div>
+    <div id="box-many" class="hidden">
+      <label class="label" for="accounts" data-i18n="accountsLabel">One account per line: username;password;label (label optional, becomes the project name suffix)</label>
+      <textarea class="textarea" id="accounts" rows="6" placeholder="tablet01;Pass-123;Maria&#10;tablet02;Pass-456;John"></textarea>
+      <p class="ajuda mt-1"><span id="accounts-n">0</span> <span data-i18n="accountsCount">account(s). Comma or tab separators also work (paste from a spreadsheet).</span></p>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="t-project">
+    <div class="flex items-center gap-3 mb-1">
+      <span class="passo">3</span>
+      <h2 id="t-project" class="titulo" data-i18n="s3">Project on the device</h2>
+    </div>
+    <p class="ajuda mb-4" data-i18n="s3help">Name, letter and colour shown at the top of the app, so a supervisor can tell from afar that the device is on the right project.</p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_5rem]">
+      <div>
+        <label class="label" for="proj-name" data-i18n="projName">Project name</label>
+        <input class="input" id="proj-name" placeholder="Household survey 2026" data-i18n-ph="projNamePh">
+      </div>
+      <div>
+        <label class="label" for="proj-icon" data-i18n="projIcon">Letter</label>
+        <input class="input text-center font-bold" id="proj-icon" maxlength="2" placeholder="H">
+      </div>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <span class="label mb-0 mr-1" data-i18n="projColor">Colour</span>
+      <div id="colors" class="flex flex-wrap gap-2"></div>
+      <input type="color" id="proj-color" value="#6b63e6" class="h-8 w-10 rounded-lg border border-line-strong bg-card cursor-pointer" aria-label="Custom colour">
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="t-admin">
+    <div class="flex items-center gap-3 mb-1">
+      <span class="passo">4</span>
+      <h2 id="t-admin" class="titulo" data-i18n="s4">Admin password</h2>
+    </div>
+    <p class="ajuda mb-4" data-i18n="s4help">Protects the app's settings menu. Without it anyone can undo the locks of step 5. Keep it with the coordination team; it also travels inside the QR code.</p>
+    <div class="flex gap-2 max-w-md">
+      <input class="input" id="admin" type="password" autocapitalize="off" spellcheck="false">
+      <button type="button" class="btn btn-icone" data-eye="admin" aria-label="Show admin password">👁</button>
+      <button type="button" class="btn" id="gen-admin" data-i18n="generate">Generate</button>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="t-beh">
+    <div class="flex items-center gap-3 mb-1">
+      <span class="passo">5</span>
+      <h2 id="t-beh" class="titulo" data-i18n="s5">App behaviour</h2>
+    </div>
+    <p class="ajuda mb-4" data-i18n="s5help">The default is the field device: the interviewer opens the app, picks the form and fills it in; sending and form updates happen on their own and the settings stay locked.</p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div>
+        <label class="label" for="preset" data-i18n="locks">Locks</label>
+        <select class="select" id="preset">
+          <option value="locked" data-i18n="presetLocked">Locked interviewer (recommended)</option>
+          <option value="strict" data-i18n="presetStrict">Locked and no moving backwards</option>
+          <option value="open" data-i18n="presetOpen">Everything allowed (supervision / testing)</option>
+          <option value="custom" data-i18n="presetCustom">Custom</option>
+        </select>
+        <p class="ajuda mt-1" id="preset-help"></p>
+      </div>
+      <div>
+        <label class="label" for="autosend" data-i18n="autosend">Auto send</label>
+        <select class="select" id="autosend">
+          <option value="wifi_and_cellular" data-i18n="asBoth">Wi-Fi and mobile data</option>
+          <option value="wifi_only" data-i18n="asWifi">Wi-Fi only</option>
+          <option value="cellular_only" data-i18n="asCell">Mobile data only</option>
+          <option value="off" data-i18n="asOff">Off (manual sending)</option>
+        </select>
+      </div>
+      <div>
+        <label class="label" for="update-mode" data-i18n="updateMode">Form updates</label>
+        <select class="select" id="update-mode">
+          <option value="match_exactly" data-i18n="umMatch">Mirror the server (new, updated, removed)</option>
+          <option value="previously_downloaded" data-i18n="umPrev">Only update downloaded forms</option>
+          <option value="manual" data-i18n="umManual">Manual</option>
+        </select>
+      </div>
+      <div>
+        <label class="label" for="update-check" data-i18n="updateCheck">Check every</label>
+        <select class="select" id="update-check">
+          <option value="every_fifteen_minutes" data-i18n="uc15">15 minutes</option>
+          <option value="every_one_hour" data-i18n="uc1h">1 hour</option>
+          <option value="every_six_hours" data-i18n="uc6h">6 hours</option>
+          <option value="every_24_hours" data-i18n="uc24h">24 hours</option>
+        </select>
+      </div>
+    </div>
+    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6">
+      <label class="switch"><input type="checkbox" id="auto-update" checked><span class="trilho"></span><span class="texto" data-i18n="autoUpdate">Download updates without asking<small>Republish on the server, it reaches the device.</small></span></label>
+      <label class="switch"><input type="checkbox" id="hide-old" checked><span class="trilho"></span><span class="texto" data-i18n="hideOld">Hide old form versions<small>Only the current version shows in the list.</small></span></label>
+      <label class="switch"><input type="checkbox" id="delete-send"><span class="trilho"></span><span class="texto" data-i18n="deleteSend">Delete from the device after sending<small>Off, the local copy is the insurance against loss.</small></span></label>
+      <label class="switch"><input type="checkbox" id="analytics"><span class="trilho"></span><span class="texto" data-i18n="analytics">Send usage analytics to ODK<small>Off by default.</small></span></label>
+    </div>
+    <details class="mt-3 group">
+      <summary class="btn btn-sm"><span data-i18n="uiDetails">Interface and form entry</span> <span class="text-muted group-open:hidden">▾</span><span class="text-muted hidden group-open:inline">▴</span></summary>
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="constraint" data-i18n="constraint">Answer validation</label>
+          <select class="select" id="constraint">
+            <option value="on_swipe" data-i18n="cSwipe">On every forward swipe</option>
+            <option value="on_finalize" data-i18n="cFinal">Only when finalizing</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="navigation" data-i18n="navigation">Navigation</label>
+          <select class="select" id="navigation">
+            <option value="" data-i18n="keep">Keep the app default</option>
+            <option value="swipe" data-i18n="nSwipe">Swipe</option>
+            <option value="buttons" data-i18n="nButtons">Buttons</option>
+            <option value="swipe_buttons" data-i18n="nBoth">Swipe and buttons</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="language" data-i18n="appLang">App language</label>
+          <select class="select" id="language">
+            <option value="" data-i18n="keep">Keep the app default</option>
+            <option value="en">English</option>
+            <option value="pt">Português</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="sw">Kiswahili</option>
+            <option value="ar">العربية</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="font-size" data-i18n="fontSize">Font size</label>
+          <select class="select" id="font-size">
+            <option value="" data-i18n="keep">Keep the app default</option>
+            <option value="13" data-i18n="fXS">Extra small</option>
+            <option value="17" data-i18n="fS">Small</option>
+            <option value="21" data-i18n="fM">Medium</option>
+            <option value="25" data-i18n="fL">Large</option>
+            <option value="29" data-i18n="fXL">Extra large</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="theme" data-i18n="theme">Theme</label>
+          <select class="select" id="theme">
+            <option value="" data-i18n="keep">Keep the app default</option>
+            <option value="light_theme" data-i18n="tLight">Light</option>
+            <option value="dark_theme" data-i18n="tDark">Dark</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="image-size" data-i18n="imageSize">Photo size</label>
+          <select class="select" id="image-size">
+            <option value="" data-i18n="keep">Keep the app default</option>
+            <option value="very_small" data-i18n="iVS">Very small (640 px)</option>
+            <option value="small" data-i18n="iS">Small (1024 px)</option>
+            <option value="medium" data-i18n="iM">Medium (2048 px)</option>
+            <option value="large" data-i18n="iL">Large (3072 px)</option>
+            <option value="original" data-i18n="iO">Original</option>
+          </select>
+        </div>
+      </div>
+    </details>
+    <details class="mt-3 group">
+      <summary class="btn btn-sm"><span data-i18n="locksDetails">Adjust locks one by one</span> <span class="text-muted group-open:hidden">▾</span><span class="text-muted hidden group-open:inline">▴</span></summary>
+      <p class="ajuda mt-3" data-i18n="locksHelp">On = the interviewer may use it. Off = hidden behind the admin password.</p>
+      <div id="locks" class="mt-1"></div>
+    </details>
+  </section>
+
+  <section class="card" id="decode" aria-labelledby="t-dec">
+    <h2 id="t-dec" class="titulo mb-1" data-i18n="s6">Read an existing QR code</h2>
+    <p class="ajuda mb-3" data-i18n="s6help">Paste the text of a configuration QR code (what any QR reader shows) to load its options here and adjust them.</p>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <textarea class="textarea" id="payload-in" rows="3" placeholder="eJx…" spellcheck="false"></textarea>
+      <button type="button" class="btn" id="read-payload" data-i18n="load">Load</button>
+    </div>
+    <p id="dec-error" class="mt-2 text-sm text-crit hidden" role="alert"></p>
+  </section>
+</form>
+
+<aside class="lg:sticky lg:top-20 self-start grid grid-cols-1 gap-4 min-w-0">
+  <section class="card" aria-live="polite">
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <h2 class="titulo" data-i18n="result">Configuration QR code</h2>
+      <span id="status" class="chip" data-i18n="stLoading">loading engine…</span>
+    </div>
+    <div class="qr-moldura">
+      <div id="qr" class="aspect-square grid place-items-center text-faint text-sm" data-i18n="qrEmpty">Fill in the server</div>
+    </div>
+    <div class="mt-3 flex items-baseline justify-between gap-2">
+      <div class="min-w-0">
+        <div id="res-project" class="font-bold truncate">—</div>
+        <div id="res-account" class="text-sm text-muted truncate">—</div>
+      </div>
+      <div id="res-size" class="text-xs text-faint tnum whitespace-nowrap"></div>
+    </div>
+    <div id="res-many" class="mt-2 hidden"></div>
+    <ul id="warnings" class="mt-3 grid gap-1.5 text-sm"></ul>
+    <div class="mt-4 grid grid-cols-2 gap-2">
+      <button type="button" class="btn btn-primary col-span-2" id="print" disabled data-i18n="print">Print card</button>
+      <button type="button" class="btn" id="dl-png" disabled data-i18n="dlPng">Download PNG</button>
+      <button type="button" class="btn" id="dl-svg" disabled data-i18n="dlSvg">Download SVG</button>
+      <button type="button" class="btn col-span-2" id="copy" disabled data-i18n="copy">Copy QR text</button>
+    </div>
+    <details class="mt-3">
+      <summary class="text-sm font-semibold text-muted" data-i18n="viewJson">View settings JSON</summary>
+      <pre id="json" class="mt-2 text-xs bg-surface2 border border-line rounded-xl p-3 overflow-auto max-h-72"></pre>
+    </details>
+  </section>
+  <section class="card">
+    <h3 class="kicker mb-2" data-i18n="onDevice">On the device</h3>
+    <ol class="text-sm grid gap-1.5 list-decimal pl-5" id="steps">
+      <li data-i18n="step1">Install <strong>ODK Collect</strong> or <strong>KoboCollect</strong> from the Play Store.</li>
+      <li data-i18n="step2">On the first screen tap <strong>Configure with QR code</strong> and point at the code. In an app already configured: project menu → <em>Add project</em> or <em>Reconfigure with QR code</em>.</li>
+      <li data-i18n="step3">Check the project name at the top and wait for the forms to download by themselves.</li>
+      <li data-i18n="step4">Test: open a form, finalize it and watch it leave through <em>Sent</em>.</li>
+    </ol>
+  </section>
+</aside>
+</main>
+
+<footer class="mx-auto max-w-6xl px-4 pb-8 text-xs text-faint">
+  <span data-i18n="footer">Engine:</span> <a class="underline" href="https://www.npmjs.com/package/collect-settings">collect-settings</a> <span id="engine-version"></span> · <a class="underline" href="https://docs.getodk.org/collect-import-export/">ODK docs</a> · <a class="underline" href="https://github.com/Prompt-Consultoria/collect-settings-app">source</a> · <span data-i18n="footer2">Passwords are only used to build the QR code, in your browser, and are never stored or sent.</span>
+</footer>
+
+<div id="impressao" class="hidden"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

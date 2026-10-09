@@ -1,0 +1,26 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: JS syntax
+        run: node --check web/app.js
+      - name: Fetch published engine package (npm collect-settings)
+        run: ./build.sh
+      - name: Engine smoke test
+        run: |
+          node --input-type=module -e "
+            import init, { render } from './web/pkg/collect_settings_wasm.js';
+            import { readFileSync } from 'node:fs';
+            await init({ module_or_path: readFileSync('./web/pkg/collect_settings_wasm_bg.wasm') });
+            const r = render({ general: { server_url: 'https://kc.kobotoolbox.org' }, admin: {} }, 4);
+            if (!r.svg.startsWith('<svg')) process.exit(1);
+            console.log('wasm renders — OK');
+          "

@@ -1,0 +1,13 @@
+{
+  "name": "collect-settings-app-tooling",
+  "private": true,
+  "description": "Only compiles web/styles.css (Tailwind 4) — the committed file is what the site serves.",
+  "scripts": {
+    "css": "tailwindcss -i web/input.css -o web/styles.css --minify",
+    "css:watch": "tailwindcss -i web/input.css -o web/styles.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}
